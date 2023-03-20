@@ -7,10 +7,12 @@ share: true
 ```mysql  
 CREATE DATABASE <database_name>;  
 ```  
+  
 ### Отобразить список баз данных:  
 ```mysql  
 SHOW DATABASES;  
 ```  
+  
 ### Подключиться к базе данных:  
 ```mysql  
 USE <database_name>;  
@@ -36,18 +38,22 @@ CREATE TABLE students
 ```  
   
 ### Основные типы данных  
+  
 #### Числовые  
 - INT - целочисленные значения.  
 - DECIMAL - хранит числа с заданной точностью. Например DECIMAL(5, 2): числа от -999.99 до 999.99.  
 - BOOL - 0 или 1, True или False.  
+  
 #### Символьные  
 - VARCHAR(N) - набор символов, где N максимальная длинна строки.  
 - TEXT - тип данных для большого объёма текста, макс размер 65KB.  
+  
 #### Дата и время  
 - DATE - Только дата, Год-Месяц-День  
 - TIME - Только время, Часы-Минуты-Секунды - "hh:mm:ss". Память хранения - 3 байта.  
 - DATETIME - Объединяет два предыдущих пункта. Занимает 8 байт в памяти.  
 - TIMESTAMP - Хранит дату и время начиная с 1970г в секундах.  
+  
 #### Бинарные  
 - BLOB - До 65кб бинарных данных  
 - LARGEBLOB - До 4GB.  
@@ -122,6 +128,7 @@ CREATE TABLE Orders
 ```  
   
 ## Запросы  
+  
 ### Получить все данные из таблицы  
 Синтаксис:  
 ```mysql  
@@ -271,6 +278,7 @@ INSERT INTO таблица(перечень_полей)
 SELECT(перечень_значений)  
 FROM ...  
 ```  
+  
 Пример:  
 ```mysql  
 CREATE TABLE Products  
@@ -298,27 +306,32 @@ UPDATE имя_таблицы
 SET столбец1 = значение1, столбец2 = значение2, ...  
 [WHERE условие_обновления]  
 ```  
+  
 Пример увеличения цены всех товаров на 3000:  
 ```mysql  
 UPDATE Products  
 SET Price = Price + 3000;  
 ```  
+  
 #### Запросы изменения данных: DELETE  
 Синтаксис:  
 ```mysql  
 DELETE FROM имя_таблицы  
 [WHERE условие_удаления]  
 ```  
+  
 Пример удаления строк, у которых производитель - Huawei:  
 ```mysql  
 DELETE FROM Products  
 WHERE Manufacturer = 'Huawei';  
 ```  
+  
 #### Запросы изменения данных: IN  
 Синтаксис:  
 ```mysql  
 WHERE выражение [NOT] IN (выражение)  
 ```  
+  
 Пример:  
 ```mysql  
 SELECT *   
@@ -326,10 +339,111 @@ FROM Products
 WHERE NOT Manufacturer IN ('Apple', 'Samsung')  
 ```  
   
+## Выборка данных  
   
+#### Сортировка результатов запроса: оператор ORDER BY  
+Синтаксис:  
+```mysql  
+SELECT поля_выборки  
+FROM список_таблиц  
+[WHERE условие]  
+ORDER BY выражение [ ASC | DESC ];  
+```  
+- ASC - сортровка по возрастанию (по умолчанию)  
+- DESC - сортировка по убыванию  
   
+Пример сортировки с помощью ORDER BY:  
+```mysql  
+SELECT *  
+FROM Products  
+ORDER BY Price;  
+```  
   
+Пример использования псевдонима в запросе с ORDER BY:  
+```mysql  
+SELECT ProductName, ProductCount * Price AS TotalSum  
+FROM Products  
+ORDER BY TotalSum;  
+```  
   
+Пример использования сложного выражения в качестве критерия сортировки:  
+```mysql  
+SELECT ProductName, Price, ProductCount  
+FROM Products  
+ORDER BY ProductCount * Price;  
+```  
   
+#### Ограничение выборки в раличных СУБД  
   
+Ключевое слово | Система баз данных  
+----|----  
+TOP | SQL Server, MS Access  
+LIMIT | MySQL, PostgreSQL, SQLite  
+FETCH FIRST | Oracle  
+  
+#### Ограничение выборки: LIMIT  
+Синтаксис:  
+```mysql  
+SELECT поля_выборки  
+FROM список_таблиц  
+LIMIT [количество_пропущенных_записей,] количество_записей_для_вывода;  
+```  
+  
+Пример использования LIMIT:  
+- Выберем первые три строки:   
+```mysql  
+SELECT *  
+FROM Products  
+LIMIT 3;  
+```  
+- Выберем три строчки, начиная со 2 позиции:  
+```mysql  
+SELECT *  
+FROM Products  
+LIMIT 2, 3;  
+```  
+  
+#### Аналоги: извлечение диапазона строк в MS SQL Server  
+В примерах работаем с базой данных "Недвижимость" и её таблицей "Объект" (Object)  
+  
+Obj_ID | Type | District | Rooms  
+----|----|----|----  
+1 | flat | Центр | 2  
+2 | flat | Центр | 2  
+3 | House | Волжский | 4  
+4 | flat | Центр | 2  
+5 | House | Волжский | 5  
+6 | flat | Пашино | 2  
+7 | flat | Центр | 3  
+8 | House | Сосновка | 3  
+  
+Пример вывода первых двух строк:  
+```sql  
+SELECT TOP 2 *  
+FROM Object  
+```  
+При помощи применённого ограничения диапазона будет выведена следующая таблица:  
+Obj_ID | Type | District | Rooms  
+----|----|----|----  
+1 | flat | Центр | 2  
+2 | flat | Центр | 2  
+  
+#### Ограничение выборки: FETCH  
+Синтаксис:  
+```mysql  
+SELECT поля_выборки  
+FROM список_таблиц  
+ORDER BY название_поля   
+OFFSET количество_пропущенных_записей  
+FETCH NEXT n ROWS ONLY;  
+```  
+  
+Пример: будут исключены m строк и выбраны следующие p строк - будут выведены строки от (m + 1) до (m + 1 + p)  
+```mysql  
+SELECT поля_выборки  
+FROM список_таблиц  
+ORDER BY название_поля   
+OFFSET m ROWS  
+FETCH NEXT p ROWS ONLY;  
+```  
   
