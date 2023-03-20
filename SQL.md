@@ -41,7 +41,7 @@ CREATE TABLE students
   
 #### Числовые  
 - INT - целочисленные значения.  
-- DECIMAL - хранит числа с заданной точностью. Например DECIMAL(5, 2): числа от -999.99 до 999.99.  
+- DECIMAL - хранит числа с заданной точностью. Можно задать два параметра DECIMAL(5, 2), где 5 общее число символов, а 2 количество знаков после запятой. Например DECIMAL(5, 2): числа от -999.99 до 999.99.  
 - BOOL - 0 или 1, True или False.  
   
 #### Символьные  
@@ -446,4 +446,128 @@ ORDER BY название_поля
 OFFSET m ROWS  
 FETCH NEXT p ROWS ONLY;  
 ```  
+  
+#### Уникальные значения - DISTINCT: вывод уникальных производителей  
+Пример:  
+```mysql  
+SELECT DISTINCT Manufacturer  
+FROM Products;  
+```  
+  
+#### Уникальные значения - DISTINCT: вывод уникальных производителей по нескольким столбцам  
+```mysql  
+SELECT DISTINCT Manufacturer, ProductCount  
+FROM Products;  
+```  
+  
+#### Группировка — GROUP BY  
+Синтаксис:  
+```mysql  
+SELECT столбцы  
+FROM таблица  
+[WHERE условие_фильтрации_строк]  
+[GROUP BY столбцы_для_группировки]  
+[HAVING условие_фильтрации_групп]  
+[ORDER BY столбцы_для_сортировки];  
+```  
+  
+Пример:  
+```mysql  
+SELECT Manufacturer, COUNT(*) AS ModelsCount  
+FROM Products  
+GROUP BY Manufacturer;  
+```  
+  
+## Агрегатные функции  
+  
+В MySQL есть следующие агрегатные функции:   
+- AVG: вычисляет среднее значение  
+- SUM: вычисляет сумму значений  
+- MIN: вычисляет наименьшее значение  
+- MAX: вычисляет наибольшее значение  
+- COUNT: вычисляет количество строк в запросе  
+  
+#### Агрегатные функции: AVG  
+Найдем среднюю цену товаров из базы данных:  
+```mysql  
+SELECT AVG(Price) AS AveragePrice  
+FROM Products;  
+```  
+  
+#### Агрегатные функции: AVG с использованием фильтрации  
+На этапе выборки можно применять фильтрацию. Например, найдём среднюю цену для товаров определённого производителя:  
+```mysql  
+SELECT AVG(Price)  
+FROM Products  
+WHERE Manufacturer = 'Apple';  
+```  
+  
+#### Агрегатные функции: COUNT  
+Пример:  
+```mysql  
+SELECT COUNT(*)  
+FROM Products;  
+```  
+  
+#### Агрегатные функции: MIN и MAX  
+Пример:  
+```mysql  
+SELECT MIN(Price), MAX(Price)  
+FROM Products;  
+```  
+  
+#### Использования HAVING  
+Синтаксис:  
+```mysql  
+SELECT expression1, expression2, ... expression_n,  
+		aggregate_function(выражение)  
+FROM таблица  
+[WHERE conditions]  
+GROUP BY столбцы_для_группировки  
+HAVING condition;  
+```  
+- aggregate_function - функция, такая как функции SUM, COUNT, MIN, MAX или AVG.  
+- expression1, expression2, ... expression_n - выражения, которые не заключены в агрегированную функцию и должны быть включены в предложение GROUP BY.  
+- WHERE conditions - необязательный. Это условия для выбора записей.  
+- HAVING condition - Это дополнительное условие применяется только к агрегированным результатам для ограничения групп возвращаемых строк.  
+  
+Например, найдем все группы товаров по производителям, для которых определено более 1 модели:  
+```mysql  
+SELECT Manufacturer, COUNT(*) AS ModelsCount  
+FROM Products  
+GROUP BY Manufacturer  
+HAVING COUNT(*) > 1;  
+```  
+  
+Пример 2:  
+```mysql  
+SELECT Manufacturer, COUNT(*) AS ModelsCount  
+FROM Products  
+WHERE Price * ProductCount > 80000  
+GROUP BY Manufacturer  
+HAVING COUNT(*) > 1;  
+```  
+В данном случае сначала фильтруются строки: выбираются те товары, общая стоимость которых больше 80000. Затем выбранные товары группируются по производителям. И далее фильтруются сами группы - выбираются те группы, которые содержат больше 1 модели.  
+  
+Пример 3:  
+```mysql  
+SELECT Manufacturer, COUNT(*) AS Models, SUM(ProductCount) AS Units  
+FROM Products  
+WHERE Price * ProductCount > 80000  
+GROUP BY Manufacturer  
+HAVING SUM(ProductCount) > 2;  
+ORDER BY Units DESC;  
+```  
+  
+#### Приоритет операций  
+1. FROM, включая JOINs  
+2. WHERE  
+3. GROUP BY  
+4. HAVING  
+5. Функции WINDOW  
+6. SELECT  
+7. DISTINCT  
+8. UNION  
+9. ORDER BY  
+10. LIMIT и OFFSET  
   
