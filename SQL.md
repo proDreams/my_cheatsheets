@@ -571,3 +571,289 @@ ORDER BY Units DESC;
 9. ORDER BY  
 10. LIMIT и OFFSET  
   
+  
+## Объединение и соединение таблиц  
+#### Оператор UNION  
+Синтаксис:  
+```mysql  
+SELECT ...  
+UNION [ ALL | DISTINCT ] SELECT ...  
+[UNION [ ALL | DISTINCT ] SELECT ...]  
+```  
+  
+Пример:  
+```mysql  
+SELECT FirstName, LastName  
+FROM Customers  
+UNION   
+SELECT FirstName, LastName  
+FROM Employees;  
+```  
+  
+#### UNION и сортировка с помощью ORDER by  
+Пример:  
+```mysql  
+SELECT FirstName, LastName  
+FROM Customers  
+UNION   
+SELECT FirstName, LastName  
+FROM Employees  
+ORDER BY FirstName DESC;  
+```  
+  
+#### Ошибка в UNION  
+Если в одной выборке больше столбцов, чем в другой, то они не могут быть объединены  
+Пример:  
+```mysql  
+SELECT FirstName  
+FROM Customers  
+UNION   
+SELECT FirstName, LastName  
+FROM Employees  
+ORDER BY FirstName DESC;  
+```  
+  
+#### UNION ALL  
+Пример:  
+```mysql  
+SELECT FirstName, LastName  
+FROM Customers  
+UNION ALL  
+SELECT FirstName, LastName  
+FROM Employees  
+ORDER BY FirstName;  
+```  
+  
+#### UNION ALL и UNION: в чем разница?  
+1. Оператор UNION удаляет повторяющиеся строки.  
+2. UNION ALL не удаляет повторяющиеся строки  
+  
+#### UNION в пределах одной таблицы.  
+Начисление процентов на вклад:  
+```mysql  
+SELECT FirstName, LastName, AccountSum + AccountSum * 0.1 AS TotalSum  
+FROM Customers  
+WHERE AccountSum < 3000  
+UNION ALL  
+SELECT FirstName, LastName, AccountSum + AccountSum * 0.3 AS TotalSum  
+FROM Customers  
+WHERE AccountSum >= 3000;  
+```  
+Если сумма меньше 3000, то начисляются проценты в размере 10% от суммы на счете. Если на счете больше 3000, то проценты увеличиваются до 30%.  
+  
+#### Соединение таблиц — JOIN  
+![](Pasted%20image%2020230323190857.png)  
+  
+#### Поддерживаемые типы объединений в MySQL  
+1. INNER JOIN: возвращает записи с совпадающими значениями в обеих таблицах.  
+2. LEFT JOIN: возвращает все записи из левой таблицы и соответствующие записи из правой таблицы.  
+3. 3 RIGHT JOIN: возвращает все записи из правой таблицы и соответствующие записи из левой таблицы.  
+4. CROSS JOIN: возвращает все записи из обеих таблиц.  
+  
+#### INNER JOIN  
+Синтаксис:  
+```mysql  
+SELECT столбцы  
+FROM таблица1  
+	[INNER] JOIN таблица2  
+	ON условие1  
+	[[INNER] JOIN таблица3  
+	ON условие2]  
+```  
+  
+Возьмем БД из прошлых уроков  
+```mysql  
+CREATE TABLE Products  
+(  
+	Id INT AUTO_INCREMENT PRIMARY KEY,  
+	ProductName VARCHAR(30) NOT NULL,  
+	Manufacturer VARCHAR(20) NOT NULL,  
+	ProductCount INT DEFAULT 0,  
+	Price DECIMAL NOT NULL  
+);  
+  
+CREATE TABLE Customers  
+(  
+	Id INT AUTO_INCREMENT PRIMARY KEY,  
+	FirstName VARCHAR(30) NOT NULL  
+);  
+  
+CREATE TABLE Orders  
+(  
+	Id INT AUTO_INCREMENT PRIMARY KEY,  
+	ProductId INT NOT NULL,  
+	CustomerId INT NOT NULL,  
+	CreatedAt DATE NOT NULL,  
+	ProductCount INT DEFAULT 1,  
+	Price DECIMAL NOT NULL,  
+	FOREIGN KEY (ProductId) REFERENCES Products(Id)  
+		ON DELETE CASCADE,  
+	FOREIGN KEY (CustomerId) REFERENCES Customers(Id)  
+		ON DELETE CASCADE,  
+);  
+```  
+  
+Пример:  
+```mysql  
+SELECT Orders.CreatedAt, Orders.ProductCount, Products.ProductName  
+FROM Orders  
+JOIN Products  
+ON Products.Id = Orders.ProductId;  
+```  
+  
+Пример с использованием псевдонимов:  
+```mysql  
+SELECT O.CreatedAt, O.ProductCount, P.ProductName  
+FROM Orders AS O  
+JOIN Products AS P  
+ON P.Id = O.ProductId;  
+```  
+  
+#### OUTER JOIN  
+Синтаксис:  
+```mysql  
+SELECT столбцы  
+FROM таблица1  
+	{ LEFT | RIGHT } [OUTER] JOIN таблица2  
+	ON условие1  
+	[{ LEFT | RIGHT } [OUTER] JOIN таблица3  
+	ON условие2]  
+```  
+  
+Перед оператором JOIN указывается одно из ключевых слов LEFT или RIGHT, которые определяют тип соединения:   
+- LEFT: выборка будет содержать все строки из первой или левой таблицы   
+- RIGHT: выборка будет содержать все строки из второй или правой таблицы  
+  
+Пример:  
+```mysql  
+SELECT FirstName, CreatedAt, ProductCount, Price, ProductId  
+FROM Orders  
+LEFT JOIN Customers  
+ON Orders.CustomerId = Customers.Id;  
+```  
+  
+#### RIGHT OUTER JOIN  
+Пример:  
+```mysql  
+SELECT FirstName, CreatedAt, ProductCount, Price  
+FROM Customers  
+RIGHT JOIN Orders  
+ON Orders.CustomerId = Customers.Id;  
+```  
+  
+#### FULL JOIN  
+Пример замены через UNION:  
+```mysql  
+SELECT p.product_name, c.category_name  
+FROM products p  
+LEFT JOIN categories c  
+ON p.category = c.category_id  
+UNION  
+SELECT p.product_name, c.category_name  
+FROM products p  
+RIGHT JOIN categories c  
+ON p.category = c.category_id;  
+```  
+  
+Пример замены через UNION ALL:  
+```mysql  
+SELECT p.product_name, c.category_name  
+FROM products p  
+LEFT JOIN categories c  
+ON p.category = c.category_id  
+UNION ALL  
+SELECT p.product_name, c.category_name  
+FROM products p  
+RIGHT JOIN categories c  
+ON p.category = c.category_id  
+WHERE p.category IS NULL;  
+```  
+  
+#### SQL CROSS JOIN  
+Краткий синтаксис | Полный синтаксис | Описание  
+---|---|---  
+JOIN | INNER JOIN | Из строк **левой_таблицы** и **правой_таблицы** объединяются и возвращаются только те строки, по которым выполняются **условия_соединения**.  
+LEFT JOIN | LEFT OUTER JOIN | Возвращаются все строки **левой_таблицы** (ключевое слово LEFT). Данными **правой_таблицы** дополняются только те строки **левой_таблицы**, для которых выполняются **условия_соединения**. Для недостающих данных вместо строк **правой_таблицы** вставляются NULL-значения.  
+RIGHT JOIN | RIGHT OUTER JOIN | Возвращаются все строки **правой_таблицы** (ключевое слово RIGHT). Данными **левой_таблицы** дополняются только те строки **правой_таблицы**, для которых выполняются **условия_соединения**. Для недостающих данных вместо строк **левой_таблицы** вставляются NULL-значения.  
+FULL JOIN | FULL OUTER JOIN | Возвращаются все строки **левой_таблицы** и **правой_таблицы**. Если для строк **левой_таблицы** и **правой_таблицы** выполняются **условия_соединения**, то они объединяются в одну строку. Для строк, для которых не выполняются **условия_соединения**, NULL-значения вставляются на место **левой_таблицы**, либо на место **правой_таблицы**, в зависимости от того данных какой таблицы в строке нет.  
+CROSS JOIN | - | Объединение каждой строки **левой_таблицы** со всеми строками **правой_таблицы**. Этот вид соединения иногда называют декартовым произведением.  
+  
+## Подзапросы  
+#### Оператор IN  
+Выберем все товары из таблицы Products, на которые есть заказы в таблице Orders:  
+```mysql  
+SELECT *  
+FROM Products  
+WHERE Id IN (  
+	SELECT ProductId   
+	FROM Orders);  
+```  
+  
+Можем выбрать те товары, на которые нет заказов в таблице Orders:  
+```mysql  
+SELECT *  
+FROM Products  
+WHERE Id NOT IN (  
+	SELECT ProductId   
+	FROM Orders);  
+```  
+  
+#### Оператор EXISTS  
+Синтаксис:  
+```mysql  
+WHERE [NOT] EXISTS (поздапрос)  
+```  
+  
+Пример:  
+```mysql  
+SELECT *  
+FROM Products  
+WHERE EXISTS(  
+	SELECT *  
+	FROM Orders  
+	WHERE Orders.ProductId = Products.Id  
+);  
+```  
+  
+#### CREATE TABLE SELECT  
+Синтаксис:  
+```mysql  
+CREATE TABLE название_таблицы  
+SELECT *  
+FROM исходная_таблица;  
+```  
+  
+Пример:  
+```mysql  
+CREATE TABLE SelectIntoDemo(  
+	Id INT,  
+	FirstName VARCHAR(200)  
+);  
+  
+INSERT INTO SelectIntoDemo  
+VALUES  
+	(1, 'Bob'),  
+	(2, 'Carol'),  
+	(3, 'David');  
+  
+SELECT *  
+FROM SelectIntoDemo;  
+  
+CREATE TABLE YourTempTable  
+SELECT *  
+FROM SelectIntoDemo;  
+  
+SELECT *  
+FROM YourTempTable;  
+```  
+  
+#### Порядок выполнения запроса  
+```mysql  
+SELECT [ DISTINCT | ALL ] поля_таблиц  
+FROM список_таблиц  
+[WHERE условия_на_ограничения_строк]  
+[GROUP BY условия_группировки]  
+[HAVING условия_на_ограничения_строк_после_группировки]  
+[ORDER BY порядок_сортировки [ ASC | DESC ]]  
+[LIMIT ограничение_количества_записей]  
+```  
